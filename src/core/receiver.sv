@@ -1,11 +1,11 @@
 module receiver(
-    input  logic        clk,
-    input  logic        reset,
-    input  logic        tick,
-    input  logic        rx,
+    input  logic       clk,
+    input  logic       reset,
+    input  logic       tick,
+    input  logic       rx,
     output logic [7:0] data,
-    output logic        en,
-    output logic        frameError
+    output logic       en,
+    output logic       err
 );
     typedef enum logic [1:0] {
         IDLE,
@@ -20,8 +20,8 @@ module receiver(
     logic       rxSync1;
     logic       rxSync2;
     logic [7:0] word;
-    logic [5:0] initialCount;
-    logic [3:0] bitCount;
+    logic [4:0] initialCount;
+    logic [2:0] bitCount;
 
     always_ff @(posedge clk) begin
         rxSync1 <= rx;
@@ -43,18 +43,18 @@ module receiver(
             end
             else if (state == START) begin
                 if (tick == '1) 
-                    if (initialCount == 6'd7)
+                    if (initialCount == 5'd7)
                         initialCount <= '0;
                     else
                         initialCount <= initialCount + 1;
             end
             else if (state == SAMPLE) begin
                 if (tick == '1) begin
-                    if (initialCount == 6'd15) begin
+                    if (initialCount == 5'd15) begin
                         word <= word >> 1;
                         word[7] <= rxSync2;
 
-                        if (bitCount == 4'd7) begin
+                        if (bitCount == 3'd7) begin
                             initialCount <= '0;
                             bitCount <= '0;
                         end
@@ -69,7 +69,7 @@ module receiver(
             end
             else if (state == FINISH) begin
                 if (tick == '1) begin
-                    if (initialCount != 6'd15) begin
+                    if (initialCount != 5'd15) begin
                         initialCount <= initialCount + 1;
                     end
                     else
@@ -84,31 +84,31 @@ module receiver(
         nextState = state;
         data = '0;
         en = '0;
-        frameError = '0;
+        err = '0;
 
         case (state)
             IDLE:
                 if (rxSync2 == '0)
                     nextState = START;
             START:
-                if (tick == '1 && initialCount == 6'd7)
+                if (tick == '1 && initialCount == 5'd7)
                     nextState = SAMPLE;
             SAMPLE:
-                if (tick == '1 && initialCount == 6'd15)
-                    if (bitCount == 4'd7)
+                if (tick == '1 && initialCount == 5'd15)
+                    if (bitCount == 3'd7)
                         nextState = FINISH;
             FINISH: 
-                if (tick == '1 && initialCount == 6'd15)
+                if (tick == '1 && initialCount == 5'd15)
                     if (rxSync2 == '1) begin
                         nextState = IDLE;
 
                         data = word;
                         en = '1;
-                        frameError = '0;
+                        err = '0;
                     end
                     else begin
                         nextState = IDLE;
-                        frameError = '1; 
+                        err = '1; 
                     end
             default: nextState = IDLE;
         endcase
