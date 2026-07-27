@@ -1,4 +1,4 @@
-module datapath(
+module fifo_datapath(
     input  logic        clk,
     input  logic        reset,
     input  logic        WR,
