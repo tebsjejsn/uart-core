@@ -3,19 +3,19 @@ module fifo_datapath(
     input  logic        reset,
     input  logic        WR,
     input  logic        RD,
-    input  logic [31:0] WD2,
-    output logic [31:0] RD1Out,
+    input  logic [7:0] WD2,
+    output logic [7:0] RD1Out,
     output logic        F,
     output logic        E
 );
-    logic [5:0]  A1Next;
-    logic [5:0]  A1;
-    logic [5:0]  A2Next;
-    logic [5:0]  A2;
-    logic        WriteLast;
-    logic [31:0] RD1Next;
-    logic        WE2;
-    logic        RE1;
+    logic [5:0] A1Next;
+    logic [5:0] A1;
+    logic [5:0] A2Next;
+    logic [5:0] A2;
+    logic       WriteLast;
+    logic [7:0] RD1Next;
+    logic       WE2;
+    logic       RE1;
 
     flopr #(.width(6)) A1_flopr (
         .clk,
@@ -31,7 +31,7 @@ module fifo_datapath(
         .q(A2)
     );
 
-    flopr #(.width(32)) RD1 (
+    flopr #(.width(8)) RD1 (
         .clk,
         .reset,
         .d(RD1Next),
@@ -50,7 +50,7 @@ module fifo_datapath(
         .y(A2Next)
     );
 
-    comparator cmp (
+    comparator #(.width(6)) cmp (
         .A1,
         .A2,
         .WriteLast,
