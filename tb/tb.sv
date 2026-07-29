@@ -14,6 +14,7 @@ module tb();
 
     integer     trace_file;
     integer     scan_line;
+    integer     out_file;
     logic [7:0] data;
 
     top dut (
@@ -46,6 +47,12 @@ module tb();
             $display("\nCould not open trace file");
             $stop;
         end
+
+        out_file = $fopen("data/outputs.txt", "w");
+        if (out_file == 0) begin
+            $display("\nCould not open output file");
+            $stop;
+        end
         
         clk = 0;
         reset = 1;
@@ -73,4 +80,27 @@ module tb();
         $display("\nSUCCESS: Reached end of file");
         $stop;
     end
+
+    initial begin
+        wait(reset == 0);
+
+        forever begin
+            @(negedge clk);
+            
+            if (rx_E == 0) begin
+                rd_en = 1;
+                
+                @(negedge clk);
+                
+                $fdisplay(out_file, "%h", rd_data);
+                $display("Time: %0t | Received: %h", $time, rd_data);
+                
+                rd_en = 0;
+                
+                @(negedge clk);
+            end
+        end
+    end
+
+    assign rx = tx;
 endmodule
