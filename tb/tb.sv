@@ -32,10 +32,8 @@ module tb();
         .err
     );
 
-    always begin
-        #3;
-        clk = ~clk;
-    end
+    initial clk = 0;
+    always #5 clk = ~clk;
 
     initial begin
         wr_en = 0;
@@ -53,31 +51,32 @@ module tb();
             $display("\nCould not open output file");
             $stop;
         end
-        
-        clk = 0;
+
         reset = 1;
         #30;
         reset = 0;
 
         while (!$feof(trace_file)) begin
-            
+
             @(negedge clk);
-            
-            if (tx_F == 0) begin 
+
+            if (tx_F == 0) begin
                 scan_line = $fscanf(trace_file, "%h", data);
-                
+
                 if (scan_line == 1) begin
                     wr_data = data;
                     wr_en = 1;
-                    
+
                     @(negedge clk);
                     wr_en = 0;
                 end
             end
         end
 
-        #10000;
+        #500000000;
         $display("\nSUCCESS: Reached end of file");
+        $fclose(trace_file);
+        $fclose(out_file);
         $stop;
     end
 
@@ -86,18 +85,15 @@ module tb();
 
         forever begin
             @(negedge clk);
-            
+
             if (rx_E == 0) begin
                 rd_en = 1;
-                
+
                 @(negedge clk);
-                
-                $fdisplay(out_file, "%h", rd_data);
-                $display("Time: %0t | Received: %h", $time, rd_data);
-                
                 rd_en = 0;
-                
-                @(negedge clk);
+
+                $fdisplay(out_file, "%H", rd_data);
+                $display("Time: %0t | Received: %h", $time, rd_data);
             end
         end
     end
