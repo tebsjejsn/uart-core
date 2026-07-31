@@ -39,17 +39,16 @@ module receiver(
             if (state == IDLE) begin
                 initialCount <= '0;
                 bitCount <= '0;
-                word <= '0;
             end
             else if (state == START) begin
-                if (tick == '1) 
+                if (tick == 1'b1) 
                     if (initialCount == 5'd7)
                         initialCount <= '0;
                     else
                         initialCount <= initialCount + 1;
             end
             else if (state == SAMPLE) begin
-                if (tick == '1) begin
+                if (tick == 1'b1) begin
                     if (initialCount == 5'd15) begin
                         word <= word >> 1;
                         word[7] <= rxSync2;
@@ -68,7 +67,7 @@ module receiver(
                 end
             end
             else if (state == FINISH) begin
-                if (tick == '1) begin
+                if (tick == 1'b1) begin
                     if (initialCount != 5'd15) begin
                         initialCount <= initialCount + 1;
                     end
@@ -83,32 +82,36 @@ module receiver(
     always_comb begin
         nextState = state;
         data = '0;
-        en = '0;
-        err = '0;
+        en = 1'b0;
+        err = 1'b0;
 
         case (state)
             IDLE:
-                if (rxSync2 == '0)
+                if (rxSync2 == 1'b0)
                     nextState = START;
             START:
-                if (tick == '1 && initialCount == 5'd7)
-                    nextState = SAMPLE;
+                if (tick == 1'b1 && initialCount == 5'd7) begin
+                    if (rxSync2 == 1'b0)
+                        nextState = SAMPLE;
+                    else
+                        nextState = IDLE;
+                end
             SAMPLE:
-                if (tick == '1 && initialCount == 5'd15)
+                if (tick == 1'b1 && initialCount == 5'd15)
                     if (bitCount == 3'd7)
                         nextState = FINISH;
             FINISH: 
-                if (tick == '1 && initialCount == 5'd15)
-                    if (rxSync2 == '1) begin
+                if (tick == 1'b1 && initialCount == 5'd15)
+                    if (rxSync2 == 1'b1) begin // Syntax error fixed here
                         nextState = IDLE;
 
                         data = word;
-                        en = '1;
-                        err = '0;
+                        en = 1'b1;
+                        err = 1'b0;
                     end
                     else begin
                         nextState = IDLE;
-                        err = '1; 
+                        err = 1'b1; 
                     end
             default: nextState = IDLE;
         endcase
